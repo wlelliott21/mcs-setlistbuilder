@@ -16,7 +16,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   );
 }
 
-export function DialogContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function DialogContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement> & { className?: string }) {
   return <div className={cn('w-full max-w-lg border bg-background p-6 shadow-lg rounded-lg relative', className)} {...props}>{children}</div>;
 }
 
