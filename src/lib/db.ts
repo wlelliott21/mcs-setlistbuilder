@@ -30,6 +30,8 @@ export async function fetchSongs(userId: string): Promise<Song[]> {
     defaultDuration: row.default_duration,
     audioLink: row.audio_link || '',
     chartLink: row.chart_link || '',
+    boardTapeLink: row.board_tape_link || '',
+    choreoVideoLink: row.choreo_video_link || '',
     notes: row.notes || '',
     tags: (row.tags || []) as Song['tags'],
     versions: versionRows
@@ -56,6 +58,8 @@ export async function createSong(userId: string, song: Omit<Song, 'id' | 'create
       default_duration: song.defaultDuration,
       audio_link: song.audioLink || null,
       chart_link: song.chartLink || null,
+      board_tape_link: song.boardTapeLink || null,
+      choreo_video_link: song.choreoVideoLink || null,
       notes: song.notes || null,
       tags: song.tags,
     })
@@ -95,6 +99,8 @@ export async function createSong(userId: string, song: Omit<Song, 'id' | 'create
     defaultDuration: data.default_duration,
     audioLink: data.audio_link || '',
     chartLink: data.chart_link || '',
+    boardTapeLink: data.board_tape_link || '',
+    choreoVideoLink: data.choreo_video_link || '',
     notes: data.notes || '',
     tags: data.tags as Song['tags'],
     versions,
@@ -110,6 +116,8 @@ export async function updateSongDb(songId: string, updates: Partial<Song>) {
   if (updates.defaultDuration !== undefined) dbUpdates.default_duration = updates.defaultDuration;
   if (updates.audioLink !== undefined) dbUpdates.audio_link = updates.audioLink || null;
   if (updates.chartLink !== undefined) dbUpdates.chart_link = updates.chartLink || null;
+  if (updates.boardTapeLink !== undefined) dbUpdates.board_tape_link = updates.boardTapeLink || null;
+  if (updates.choreoVideoLink !== undefined) dbUpdates.choreo_video_link = updates.choreoVideoLink || null;
   if (updates.notes !== undefined) dbUpdates.notes = updates.notes || null;
   if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
 
@@ -412,6 +420,8 @@ export async function fetchSharedGig(shareToken: string): Promise<{ gig: Gig; so
     defaultDuration: row.default_duration,
     audioLink: row.audio_link || '',
     chartLink: row.chart_link || '',
+    boardTapeLink: row.board_tape_link || '',
+    choreoVideoLink: row.choreo_video_link || '',
     notes: row.notes || '',
     tags: row.tags || [],
     versions: versionRows

@@ -38,6 +38,8 @@ export interface Song {
   defaultDuration: number;
   audioLink?: string;
   chartLink?: string;
+  boardTapeLink?: string;
+  choreoVideoLink?: string;
   notes?: string;
   tags: Tag[];
   versions: SongVersion[];

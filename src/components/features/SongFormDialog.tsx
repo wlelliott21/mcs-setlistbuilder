@@ -16,7 +16,7 @@ import { showToast } from '@/lib/toast';
 interface Props { open: boolean; onOpenChange: (open: boolean) => void; song?: Song | null; }
 interface VersionForm { id: string; name: string; key: string; duration: string; notes: string; }
 
-const emptyForm = { title: '', artist: '', defaultKey: 'C', defaultDuration: '3:30', audioLink: '', chartLink: '', notes: '', tags: [] as Tag[] };
+const emptyForm = { title: '', artist: '', defaultKey: 'C', defaultDuration: '3:30', audioLink: '', chartLink: '', boardTapeLink: '', choreoVideoLink: '', notes: '', tags: [] as Tag[] };
 
 export default function SongFormDialog({ open, onOpenChange, song }: Props) {
   const { updateSong, setSongs } = useSongStore();
@@ -28,7 +28,7 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
 
   useEffect(() => {
     if (song) {
-      setForm({ title: song.title, artist: song.artist, defaultKey: song.defaultKey, defaultDuration: formatDuration(song.defaultDuration), audioLink: song.audioLink || '', chartLink: song.chartLink || '', notes: song.notes || '', tags: [...song.tags] });
+      setForm({ title: song.title, artist: song.artist, defaultKey: song.defaultKey, defaultDuration: formatDuration(song.defaultDuration), audioLink: song.audioLink || '', chartLink: song.chartLink || '', boardTapeLink: song.boardTapeLink || '', choreoVideoLink: song.choreoVideoLink || '', notes: song.notes || '', tags: [...song.tags] });
       setVersions(song.versions.map((v) => ({ id: v.id, name: v.name, key: v.key || '', duration: v.duration ? formatDuration(v.duration) : '', notes: v.notes || '' })));
     } else { setForm(emptyForm); setVersions([]); }
   }, [song, open]);
@@ -54,6 +54,7 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
           title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
           defaultDuration: parseDuration(form.defaultDuration),
           audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
+          boardTapeLink: form.boardTapeLink || undefined, choreoVideoLink: form.choreoVideoLink || undefined,
           notes: form.notes || undefined, tags: form.tags, versions: versionData,
         };
         await updateSongDb(song.id, updates);
@@ -66,6 +67,7 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
           title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
           defaultDuration: parseDuration(form.defaultDuration),
           audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
+          boardTapeLink: form.boardTapeLink || undefined, choreoVideoLink: form.choreoVideoLink || undefined,
           notes: form.notes || undefined, tags: form.tags, versions: versionData,
         });
         const freshSongs = await fetchSongs(user.id);
@@ -121,6 +123,10 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>Audio Link</Label><Input value={form.audioLink} onChange={(e) => setForm((f) => ({ ...f, audioLink: e.target.value }))} placeholder="Spotify or YouTube URL" /></div>
             <div className="space-y-1.5"><Label>Chart Link</Label><Input value={form.chartLink} onChange={(e) => setForm((f) => ({ ...f, chartLink: e.target.value }))} placeholder="Dropbox or PDF URL" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Board Tape</Label><Input value={form.boardTapeLink} onChange={(e) => setForm((f) => ({ ...f, boardTapeLink: e.target.value }))} placeholder="Board tape URL" /></div>
+            <div className="space-y-1.5"><Label>Choreo Video</Label><Input value={form.choreoVideoLink} onChange={(e) => setForm((f) => ({ ...f, choreoVideoLink: e.target.value }))} placeholder="Choreography video URL" /></div>
           </div>
           <div className="space-y-1.5"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Performance notes, cues…" rows={2} /></div>
           <div className="space-y-1.5">

@@ -36,7 +36,7 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
   const effectiveDur = getEffectiveDuration(song, entry.versionId);
   const versionName = getVersionName(song, entry.versionId);
   const notes = getEffectiveNotes(song, entry.versionId);
-  const hasLinks = !!(song.audioLink || song.chartLink);
+  const hasLinks = !!(song.audioLink || song.chartLink || song.boardTapeLink || song.choreoVideoLink);
   const hasDetails = hasLinks || !!notes || song.tags.length > 0;
 
   const handleKeyChange = async (key: string) => {
@@ -162,6 +162,18 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
                 <a href={song.chartLink} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
                   📄 {song.chartLink.includes('dropbox') ? 'Dropbox Chart' : 'View Chart'} ↗
+                </a>
+              )}
+              {song.boardTapeLink && (
+                <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20 transition-colors">
+                  🎛️ Board Tape ↗
+                </a>
+              )}
+              {song.choreoVideoLink && (
+                <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-pink-500/10 text-pink-400 border border-pink-500/20 hover:bg-pink-500/20 transition-colors">
+                  💃 Choreo Video ↗
                 </a>
               )}
             </div>

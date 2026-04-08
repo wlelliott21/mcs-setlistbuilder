@@ -35,10 +35,12 @@ export default function SongCard({ song, onEdit, onDelete }: { song: Song; onEdi
       {song.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">{song.tags.map((tag) => <TagBadge key={tag} tag={tag} />)}</div>
       )}
-      {(song.audioLink || song.chartLink) && (
-        <div className="flex items-center gap-1.5 pt-1">
+      {(song.audioLink || song.chartLink || song.boardTapeLink || song.choreoVideoLink) && (
+        <div className="flex items-center gap-1.5 flex-wrap pt-1">
           {song.audioLink && <a href={song.audioLink} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-primary">🎧 Audio ↗</a>}
           {song.chartLink && <a href={song.chartLink} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-primary ml-2">📄 Chart ↗</a>}
+          {song.boardTapeLink && <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-primary ml-2">🎛️ Board Tape ↗</a>}
+          {song.choreoVideoLink && <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-primary ml-2">💃 Choreo ↗</a>}
         </div>
       )}
     </div>

@@ -92,10 +92,12 @@ export default function SharedView() {
                       </div>
                       {song.tags.length > 0 && <div className="flex flex-wrap gap-1 ml-5">{song.tags.map((t) => <TagBadge key={t} tag={t} />)}</div>}
                       {entryNotes && <div className="flex items-start gap-1.5 ml-5 text-xs text-muted-foreground">📝 {entryNotes}</div>}
-                      {(song.audioLink || song.chartLink) && (
-                        <div className="flex items-center gap-2 ml-5">
+                      {(song.audioLink || song.chartLink || song.boardTapeLink || song.choreoVideoLink) && (
+                        <div className="flex items-center gap-2 flex-wrap ml-5">
                           {song.audioLink && <a href={song.audioLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">🎧 Audio ↗</a>}
                           {song.chartLink && <a href={song.chartLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">📄 Chart ↗</a>}
+                          {song.boardTapeLink && <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">🎛️ Board Tape ↗</a>}
+                          {song.choreoVideoLink && <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">💃 Choreo ↗</a>}
                         </div>
                       )}
                     </div>
