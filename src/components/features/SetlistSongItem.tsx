@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useSongStore } from '@/stores/songStore';
 import { useGigStore } from '@/stores/gigStore';
 import { getEffectiveKey, getEffectiveDuration, getEffectiveNotes, getVersionName, formatDuration } from '@/lib/helpers';
+import { updateEntryDb, deleteEntryDb, moveEntryToSetDb } from '@/lib/db';
+import { showToast } from '@/lib/toast';
 import { MUSICAL_KEYS } from '@/types';
 import type { SetlistEntry, GigSet } from '@/types';
 import TagBadge from '@/components/features/TagBadge';
@@ -20,7 +22,7 @@ interface Props {
 
 export default function SetlistSongItem({ entry, index, gigId, setId, otherSets, isLocked, canEdit, isDuplicate }: Props) {
   const songs = useSongStore((s) => s.songs);
-  const { removeSongFromSet, moveSongToSet, updateSetlistEntry } = useGigStore();
+  const { removeEntryLocal, moveEntryLocal, updateEntryLocal } = useGigStore();
   const [expanded, setExpanded] = useState(false);
   const [showKeyPicker, setShowKeyPicker] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -36,6 +38,36 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
   const notes = getEffectiveNotes(song, entry.versionId);
   const hasLinks = !!(song.audioLink || song.chartLink);
   const hasDetails = hasLinks || !!notes || song.tags.length > 0;
+
+  const handleKeyChange = async (key: string) => {
+    updateEntryLocal(gigId, setId, entry.id, { keyOverride: key });
+    setShowKeyPicker(false);
+    try { await updateEntryDb(entry.id, { key_override: key }); }
+    catch (err: any) { showToast(err.message, 'error'); }
+  };
+
+  const handleVersionChange = async (versionId?: string) => {
+    updateEntryLocal(gigId, setId, entry.id, { versionId });
+    setShowMenu(false);
+    try { await updateEntryDb(entry.id, { version_id: versionId || null }); }
+    catch (err: any) { showToast(err.message, 'error'); }
+  };
+
+  const handleRemove = async () => {
+    removeEntryLocal(gigId, setId, entry.id);
+    setShowMenu(false);
+    try { await deleteEntryDb(entry.id); }
+    catch (err: any) { showToast(err.message, 'error'); }
+  };
+
+  const handleMoveTo = async (toSetId: string) => {
+    const targetSet = otherSets.find((s) => s.id === toSetId);
+    const sortOrder = targetSet ? targetSet.entries.length : 0;
+    moveEntryLocal(gigId, setId, toSetId, entry.id, entry);
+    setShowMenu(false);
+    try { await moveEntryToSetDb(entry.id, toSetId, sortOrder); }
+    catch (err: any) { showToast(err.message, 'error'); }
+  };
 
   return (
     <div className={cn(
@@ -68,9 +100,7 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
                     {MUSICAL_KEYS.map((k) => (
                       <button key={k} type="button"
                         className={cn('block w-full text-left px-2 py-1 text-xs font-mono rounded hover:bg-accent', effectiveKey === k && 'bg-accent font-bold')}
-                        onClick={() => { updateSetlistEntry(gigId, setId, entry.id, { keyOverride: k }); setShowKeyPicker(false); }}>
-                        {k}
-                      </button>
+                        onClick={() => handleKeyChange(k)}>{k}</button>
                     ))}
                   </div>
                 </>
@@ -91,14 +121,10 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
                       <>
                         <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Version</div>
                         <button type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
-                          onClick={() => { updateSetlistEntry(gigId, setId, entry.id, { versionId: undefined }); setShowMenu(false); }}>
-                          Default {!entry.versionId && '✓'}
-                        </button>
+                          onClick={() => handleVersionChange(undefined)}>Default {!entry.versionId && '✓'}</button>
                         {song.versions.map((v) => (
                           <button key={v.id} type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
-                            onClick={() => { updateSetlistEntry(gigId, setId, entry.id, { versionId: v.id }); setShowMenu(false); }}>
-                            {v.name} {entry.versionId === v.id && '✓'}
-                          </button>
+                            onClick={() => handleVersionChange(v.id)}>{v.name} {entry.versionId === v.id && '✓'}</button>
                         ))}
                         <div className="h-px bg-border my-1" />
                       </>
@@ -108,17 +134,13 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
                         <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Move to</div>
                         {otherSets.map((st) => (
                           <button key={st.id} type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent pl-4"
-                            onClick={() => { moveSongToSet(gigId, setId, st.id, entry.id); setShowMenu(false); }}>
-                            {st.name}
-                          </button>
+                            onClick={() => handleMoveTo(st.id)}>{st.name}</button>
                         ))}
                         <div className="h-px bg-border my-1" />
                       </>
                     )}
                     <button type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent text-destructive"
-                      onClick={() => { removeSongFromSet(gigId, setId, entry.id); setShowMenu(false); }}>
-                      🗑️ Remove
-                    </button>
+                      onClick={handleRemove}>🗑️ Remove</button>
                   </div>
                 </>
               )}

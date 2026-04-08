@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSongStore } from '@/stores/songStore';
-import { formatDuration, parseDuration, generateId } from '@/lib/helpers';
+import { useAuth } from '@/hooks/useAuth';
+import { createSong, updateSongDb, fetchSongs } from '@/lib/db';
+import { formatDuration, parseDuration } from '@/lib/helpers';
 import { MUSICAL_KEYS, ALL_TAGS, TAG_COLORS } from '@/types';
 import type { Song, Tag } from '@/types';
 import { cn } from '@/lib/utils';
@@ -17,10 +19,12 @@ interface VersionForm { id: string; name: string; key: string; duration: string;
 const emptyForm = { title: '', artist: '', defaultKey: 'C', defaultDuration: '3:30', audioLink: '', chartLink: '', notes: '', tags: [] as Tag[] };
 
 export default function SongFormDialog({ open, onOpenChange, song }: Props) {
-  const { addSong, updateSong } = useSongStore();
+  const { updateSong, setSongs } = useSongStore();
+  const { user } = useAuth();
   const [form, setForm] = useState(emptyForm);
   const [versions, setVersions] = useState<VersionForm[]>([]);
   const [showKeyPicker, setShowKeyPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (song) {
@@ -31,21 +35,52 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
 
   const toggleTag = (tag: Tag) => setForm((f) => ({ ...f, tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag] }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title.trim() || !form.artist.trim()) { showToast('Title and Artist are required', 'error'); return; }
-    const data = {
-      title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
-      defaultDuration: parseDuration(form.defaultDuration),
-      audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
-      notes: form.notes || undefined, tags: form.tags,
-      versions: versions.filter((v) => v.name.trim()).map((v) => ({ id: v.id, name: v.name.trim(), key: v.key || undefined, duration: v.duration ? parseDuration(v.duration) : undefined, notes: v.notes || undefined })),
-    };
-    if (song) { updateSong(song.id, data); showToast('Song updated'); }
-    else { addSong(data as any); showToast('Song added to library'); }
-    onOpenChange(false);
+    if (!user) return;
+    setSaving(true);
+
+    const versionData = versions.filter((v) => v.name.trim()).map((v) => ({
+      id: v.id,
+      name: v.name.trim(),
+      key: v.key || undefined,
+      duration: v.duration ? parseDuration(v.duration) : undefined,
+      notes: v.notes || undefined,
+    }));
+
+    try {
+      if (song) {
+        const updates: Partial<Song> = {
+          title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
+          defaultDuration: parseDuration(form.defaultDuration),
+          audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
+          notes: form.notes || undefined, tags: form.tags, versions: versionData,
+        };
+        await updateSongDb(song.id, updates);
+        // Refetch to get correct version IDs from DB
+        const freshSongs = await fetchSongs(user.id);
+        setSongs(freshSongs);
+        showToast('Song updated');
+      } else {
+        await createSong(user.id, {
+          title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
+          defaultDuration: parseDuration(form.defaultDuration),
+          audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
+          notes: form.notes || undefined, tags: form.tags, versions: versionData,
+        });
+        const freshSongs = await fetchSongs(user.id);
+        setSongs(freshSongs);
+        showToast('Song added to library');
+      }
+      onOpenChange(false);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const addVersionRow = () => setVersions((v) => [...v, { id: generateId(), name: '', key: '', duration: '', notes: '' }]);
+  const addVersionRow = () => setVersions((v) => [...v, { id: crypto.randomUUID(), name: '', key: '', duration: '', notes: '' }]);
   const updateVersion = (i: number, field: keyof VersionForm, value: string) => setVersions((v) => v.map((x, j) => j === i ? { ...x, [field]: value } : x));
   const removeVersion = (i: number) => setVersions((v) => v.filter((_, j) => j !== i));
 
@@ -123,7 +158,7 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>{song ? 'Save Changes' : 'Add Song'}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : song ? 'Save Changes' : 'Add Song'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

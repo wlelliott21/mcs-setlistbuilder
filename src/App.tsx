@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
+import { useAuth, initAuth } from '@/hooks/useAuth';
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const SongLibrary = lazy(() => import('@/pages/SongLibrary'));
@@ -8,6 +9,7 @@ const GigBuilder = lazy(() => import('@/pages/GigBuilder'));
 const LiveMode = lazy(() => import('@/pages/LiveMode'));
 const SharedView = lazy(() => import('@/pages/SharedView'));
 const PrintView = lazy(() => import('@/pages/PrintView'));
+const Login = lazy(() => import('@/pages/Login'));
 
 function LoadingSpinner() {
   return (
@@ -45,18 +47,9 @@ class ErrorBoundary extends React.Component<
           <h1 className="text-2xl font-bold text-red-400" style={{ fontFamily: 'Syne, sans-serif' }}>Something went wrong</h1>
           <p className="text-gray-400 text-sm text-center max-w-md">{this.state.error?.message}</p>
           <button
-            onClick={() => {
-              localStorage.removeItem('setlist-songs');
-              localStorage.removeItem('setlist-gigs');
-              localStorage.removeItem('setlist-app');
-              localStorage.removeItem('setlist-templates');
-              this.setState({ hasError: false });
-              window.location.href = '/';
-            }}
+            onClick={() => { this.setState({ hasError: false }); window.location.href = '/'; }}
             className="text-amber-500 hover:underline text-sm"
-          >
-            Reset and Reload
-          </button>
+          >Reload</button>
         </div>
       );
     }
@@ -64,20 +57,32 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Suspense fallback={<LoadingSpinner />}><Login /></Suspense>;
+  return <>{children}</>;
+}
+
 export default function App() {
+  useEffect(() => { initAuth(); }, []);
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="library" element={<SongLibrary />} />
-              <Route path="gig/:gigId" element={<GigBuilder />} />
+            {/* Public share route — no auth required */}
+            <Route path="/share/:token" element={<SharedView />} />
+            {/* All other routes require auth */}
+            <Route element={<AuthGate><AppLayout /></AuthGate>}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/library" element={<SongLibrary />} />
+              <Route path="/gig/:gigId" element={<GigBuilder />} />
             </Route>
-            <Route path="/gig/:gigId/live" element={<LiveMode />} />
-            <Route path="/gig/:gigId/share" element={<SharedView />} />
-            <Route path="/gig/:gigId/print" element={<PrintView />} />
+            <Route path="/gig/:gigId/live" element={<AuthGate><LiveMode /></AuthGate>} />
+            <Route path="/gig/:gigId/print" element={<AuthGate><PrintView /></AuthGate>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

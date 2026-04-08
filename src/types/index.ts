@@ -9,14 +9,8 @@ export type Tag =
   | 'Cake Cutting';
 
 export const ALL_TAGS: Tag[] = [
-  'High Energy',
-  'Dance Floor',
-  'Slow',
-  'Dinner',
-  'First Dance',
-  'Encore',
-  'Corporate',
-  'Cake Cutting',
+  'High Energy', 'Dance Floor', 'Slow', 'Dinner',
+  'First Dance', 'Encore', 'Corporate', 'Cake Cutting',
 ];
 
 export const MUSICAL_KEYS = [
@@ -72,14 +66,12 @@ export interface Gig {
   venue: string;
   client?: string;
   notes?: string;
-  template?: string;
-  sets: GigSet[];
   bufferTime: number;
   isLocked: boolean;
+  shareToken?: string;
   createdAt: string;
+  sets: GigSet[];
 }
-
-export type UserRole = 'leader' | 'member';
 
 export const TAG_COLORS: Record<Tag, string> = {
   'High Energy': 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -108,24 +100,4 @@ export interface GigTemplate {
   name: string;
   description: string;
   sets: { name: string; targetDuration: number }[];
-}
-
-export interface SetlistTemplateEntry {
-  songId: string;
-  versionId?: string;
-  keyOverride?: string;
-}
-
-export interface SetlistTemplateSet {
-  name: string;
-  targetDuration: number;
-  entries: SetlistTemplateEntry[];
-}
-
-export interface SetlistTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  sets: SetlistTemplateSet[];
-  createdAt: string;
 }

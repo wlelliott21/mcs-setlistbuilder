@@ -3,29 +3,21 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { useGigStore } from '@/stores/gigStore';
-import { useAppStore } from '@/stores/appStore';
-import { useTemplateStore } from '@/stores/templateStore';
 import SetPanel from '@/components/features/SetPanel';
 import SongPicker from '@/components/features/SongPicker';
 import GigFormDialog from '@/components/features/GigFormDialog';
 import { showToast } from '@/lib/toast';
-import type { SetlistTemplateSet } from '@/types';
+import { updateGigDb, addSetDb } from '@/lib/db';
 
 export default function GigBuilder() {
   const { gigId } = useParams<{ gigId: string }>();
   const navigate = useNavigate();
   const gig = useGigStore((s) => s.gigs.find((g) => g.id === gigId));
-  const { toggleLock, setBufferTime, addSet } = useGigStore();
-  const { addTemplate } = useTemplateStore();
-  const role = useAppStore((s) => s.role);
+  const { updateGig, addSetLocal } = useGigStore();
   const [activeSetId, setActiveSetId] = useState<string | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [templateDesc, setTemplateDesc] = useState('');
 
   if (!gig) return (
     <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -34,22 +26,38 @@ export default function GigBuilder() {
     </div>
   );
 
-  const canEdit = role === 'leader' && !gig.isLocked;
+  const canEdit = !gig.isLocked;
   const effectiveActiveSetId = activeSetId || (gig.sets.length > 0 ? gig.sets[0].id : null);
   const activeSetName = gig.sets.find((s) => s.id === effectiveActiveSetId)?.name || 'No set selected';
-  const totalSongs = gig.sets.reduce((sum, s) => sum + s.entries.length, 0);
 
-  const handleLockToggle = () => { toggleLock(gig.id); showToast(gig.isLocked ? 'Setlist unlocked' : 'Setlist locked'); };
-  const handleCopyShareLink = () => { navigator.clipboard.writeText(`${window.location.origin}/gig/${gig.id}/share`); showToast('Share link copied'); };
-
-  const handleSaveTemplate = () => {
-    if (!templateName.trim()) { showToast('Template name is required', 'error'); return; }
-    const sets: SetlistTemplateSet[] = gig.sets.map((s) => ({ name: s.name, targetDuration: s.targetDuration, entries: s.entries.map((e) => ({ songId: e.songId, versionId: e.versionId, keyOverride: e.keyOverride })) }));
-    addTemplate({ name: templateName.trim(), description: templateDesc.trim() || undefined, sets });
-    showToast('Setlist saved as template'); setSaveTemplateOpen(false); setTemplateName(''); setTemplateDesc('');
+  const handleLockToggle = async () => {
+    try {
+      await updateGigDb(gig.id, { is_locked: !gig.isLocked });
+      updateGig(gig.id, { isLocked: !gig.isLocked });
+      showToast(gig.isLocked ? 'Setlist unlocked' : 'Setlist locked');
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
-  const openSaveTemplate = () => { setTemplateName(gig.name + ' Template'); setTemplateDesc(''); setSaveTemplateOpen(true); };
+  const handleCopyShareLink = () => {
+    if (gig.shareToken) {
+      navigator.clipboard.writeText(`${window.location.origin}/share/${gig.shareToken}`);
+      showToast('Share link copied');
+    }
+  };
+
+  const handleAddSet = async () => {
+    try {
+      const newSet = await addSetDb(gig.id, `Set ${gig.sets.length + 1}`, 45, gig.sets.length);
+      addSetLocal(gig.id, newSet);
+    } catch (err: any) { showToast(err.message, 'error'); }
+  };
+
+  const handleBufferChange = async (value: number) => {
+    try {
+      await updateGigDb(gig.id, { buffer_time: value });
+      updateGig(gig.id, { bufferTime: value });
+    } catch (err: any) { showToast(err.message, 'error'); }
+  };
 
   const dateStr = new Date(gig.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -68,18 +76,17 @@ export default function GigBuilder() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {role === 'leader' && totalSongs > 0 && <Button variant="outline" size="sm" className="text-xs h-8" onClick={openSaveTemplate}>💾 Save as Template</Button>}
-            {role === 'leader' && <Button variant="outline" size="sm" className="text-xs h-8" onClick={handleLockToggle}>{gig.isLocked ? '🔓 Unlock' : '🔒 Lock'}</Button>}
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={handleLockToggle}>{gig.isLocked ? '🔓 Unlock' : '🔒 Lock'}</Button>
             <Link to={`/gig/${gig.id}/live`}><Button variant="outline" size="sm" className="text-xs h-8">▶ Live Mode</Button></Link>
             <Button variant="outline" size="sm" className="text-xs h-8" onClick={handleCopyShareLink}>🔗 Share</Button>
             <Link to={`/gig/${gig.id}/print`}><Button variant="outline" size="sm" className="text-xs h-8">🖨 Print</Button></Link>
-            {role === 'leader' && <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setEditDialogOpen(true)}>⚙ Edit</Button>}
+            <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setEditDialogOpen(true)}>⚙ Edit</Button>
           </div>
         </div>
         {canEdit && (
           <div className="flex items-center gap-3 ml-9">
             <Label className="text-xs text-muted-foreground">Buffer:</Label>
-            <Input type="number" value={gig.bufferTime} onChange={(e) => setBufferTime(gig.id, parseInt(e.target.value) || 0)} className="w-14 h-7 text-xs font-mono text-center" min={0} max={120} />
+            <Input type="number" value={gig.bufferTime} onChange={(e) => handleBufferChange(parseInt(e.target.value) || 0)} className="w-14 h-7 text-xs font-mono text-center" min={0} max={120} />
             <span className="text-xs text-muted-foreground">sec</span>
           </div>
         )}
@@ -91,12 +98,12 @@ export default function GigBuilder() {
               canEdit={canEdit} isActive={set.id === effectiveActiveSetId}
               onActivate={() => setActiveSetId(set.id)} onAddSong={() => { setActiveSetId(set.id); setPickerOpen(true); }} />
           ))}
-          {canEdit && <button className="w-full py-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors text-sm font-medium" onClick={() => addSet(gig.id)}>+ Add New Set</button>}
+          {canEdit && <button className="w-full py-3 rounded-xl border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors text-sm font-medium" onClick={handleAddSet}>+ Add New Set</button>}
           {gig.sets.length === 0 && (
             <div className="text-center py-16 border border-dashed border-border rounded-xl">
               <p className="text-3xl mb-3 opacity-30">🎵</p>
               <p className="text-sm text-muted-foreground mb-3">No sets yet.</p>
-              {canEdit && <Button size="sm" onClick={() => addSet(gig.id)}>+ Add Set</Button>}
+              {canEdit && <Button size="sm" onClick={handleAddSet}>+ Add Set</Button>}
             </div>
           )}
         </div>
@@ -126,26 +133,6 @@ export default function GigBuilder() {
         </div>
       )}
       <GigFormDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} gig={gig} />
-      <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Syne, sans-serif' }}>Save as Setlist Template</DialogTitle>
-            <DialogDescription>Save this gig's complete setlist as a reusable template.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5"><Label>Template Name *</Label><Input value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="e.g. Wedding Standard Set" autoFocus onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplate()} /></div>
-            <div className="space-y-1.5"><Label>Description</Label><Input value={templateDesc} onChange={(e) => setTemplateDesc(e.target.value)} placeholder="Optional description" /></div>
-            <div className="bg-muted/50 rounded-lg p-3 space-y-1">
-              <p className="text-xs font-semibold text-foreground">Will save:</p>
-              {gig.sets.map((s) => <p key={s.id} className="text-xs text-muted-foreground">{s.name} — {s.entries.length} song{s.entries.length !== 1 ? 's' : ''} ({s.targetDuration}m target)</p>)}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setSaveTemplateOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveTemplate}>💾 Save Template</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

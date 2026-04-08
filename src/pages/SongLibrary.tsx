@@ -2,18 +2,17 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSongStore } from '@/stores/songStore';
-import { useAppStore } from '@/stores/appStore';
 import SongCard from '@/components/features/SongCard';
 import SongFormDialog from '@/components/features/SongFormDialog';
 import { ALL_TAGS, TAG_COLORS } from '@/types';
 import type { Song, Tag } from '@/types';
 import { cn } from '@/lib/utils';
+import { deleteSongDb } from '@/lib/db';
 import { showToast } from '@/lib/toast';
 
 export default function SongLibrary() {
   const songs = useSongStore((s) => s.songs);
   const deleteSong = useSongStore((s) => s.deleteSong);
-  const role = useAppStore((s) => s.role);
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<Tag | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -27,7 +26,15 @@ export default function SongLibrary() {
   }, [songs, search, tagFilter]);
 
   const handleEdit = (song: Song) => { setEditSong(song); setDialogOpen(true); };
-  const handleDelete = (song: Song) => { deleteSong(song.id); showToast(`"${song.title}" removed`); };
+  const handleDelete = async (song: Song) => {
+    try {
+      await deleteSongDb(song.id);
+      deleteSong(song.id);
+      showToast(`"${song.title}" removed`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete', 'error');
+    }
+  };
   const handleNew = () => { setEditSong(null); setDialogOpen(true); };
 
   return (
@@ -37,7 +44,7 @@ export default function SongLibrary() {
           <h1 className="font-bold text-xl" style={{ fontFamily: 'Syne, sans-serif' }}>Song Library</h1>
           <p className="text-xs text-muted-foreground mt-0.5">{songs.length} songs</p>
         </div>
-        {role === 'leader' && <Button onClick={handleNew} size="sm">+ Add Song</Button>}
+        <Button onClick={handleNew} size="sm">+ Add Song</Button>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-sm">

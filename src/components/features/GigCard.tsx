@@ -34,9 +34,6 @@ export default function GigCard({ gig }: { gig: Gig }) {
         <Link to={`/gig/${gig.id}/live`}>
           <button className="text-xs h-8 px-3 rounded-md font-medium border border-input bg-background hover:bg-accent transition-colors">Live</button>
         </Link>
-        <Link to={`/gig/${gig.id}/share`}>
-          <button className="text-xs h-8 px-3 rounded-md font-medium border border-input bg-background hover:bg-accent transition-colors">Share</button>
-        </Link>
       </div>
     </div>
   );

@@ -1,9 +1,5 @@
 import type { Song, GigSet, Tag } from '@/types';
 
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 11);
-}
-
 export function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;

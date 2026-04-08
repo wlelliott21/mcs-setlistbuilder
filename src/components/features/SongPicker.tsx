@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useSongStore } from '@/stores/songStore';
 import { useGigStore } from '@/stores/gigStore';
+import { addEntryDb } from '@/lib/db';
 import { getSmartSuggestions, formatDuration } from '@/lib/helpers';
+import { showToast } from '@/lib/toast';
 import TagBadge from './TagBadge';
 import { ALL_TAGS, TAG_COLORS } from '@/types';
 import type { Tag, GigSet } from '@/types';
 import { cn } from '@/lib/utils';
-import { showToast } from '@/lib/toast';
 
 interface Props {
   gigId: string;
@@ -17,7 +18,7 @@ interface Props {
 
 export default function SongPicker({ gigId, activeSetId, activeSetName, allSets }: Props) {
   const songs = useSongStore((s) => s.songs);
-  const { addSongToSet } = useGigStore();
+  const { addEntryLocal } = useGigStore();
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<Tag | null>(null);
 
@@ -39,11 +40,18 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
     return getSmartSuggestions(activeSet, allSets, songs);
   }, [activeSet, allSets, songs]);
 
-  const handleAdd = (songId: string) => {
+  const handleAdd = async (songId: string) => {
     if (!activeSetId) { showToast('Select a set first', 'error'); return; }
+    const currentSet = allSets.find((s) => s.id === activeSetId);
+    const sortOrder = currentSet ? currentSet.entries.length : 0;
     if (usedSongIds.has(songId)) showToast('Song already in setlist — added anyway', 'warning');
-    addSongToSet(gigId, activeSetId, { songId });
-    showToast('Song added');
+    try {
+      const entry = await addEntryDb(activeSetId, songId, sortOrder);
+      addEntryLocal(gigId, activeSetId, entry);
+      showToast('Song added');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to add song', 'error');
+    }
   };
 
   return (
@@ -56,14 +64,10 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
           className="w-full h-8 text-sm rounded-md border border-input bg-background px-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         <div className="flex flex-wrap gap-1">
           <button type="button" onClick={() => setTagFilter(null)}
-            className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', !tagFilter ? 'bg-primary/15 text-primary border-primary/30' : 'border-border text-muted-foreground hover:text-foreground')}>
-            All
-          </button>
+            className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', !tagFilter ? 'bg-primary/15 text-primary border-primary/30' : 'border-border text-muted-foreground hover:text-foreground')}>All</button>
           {ALL_TAGS.map((tag) => (
             <button key={tag} type="button" onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-              className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', tagFilter === tag ? TAG_COLORS[tag] : 'border-border text-muted-foreground hover:text-foreground')}>
-              {tag}
-            </button>
+              className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', tagFilter === tag ? TAG_COLORS[tag] : 'border-border text-muted-foreground hover:text-foreground')}>{tag}</button>
           ))}
         </div>
       </div>

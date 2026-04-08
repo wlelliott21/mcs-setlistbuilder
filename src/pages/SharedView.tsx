@@ -1,20 +1,40 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useGigStore } from '@/stores/gigStore';
-import { useSongStore } from '@/stores/songStore';
+import { fetchSharedGig } from '@/lib/db';
 import { getEffectiveKey, getEffectiveDuration, getEffectiveNotes, getVersionName, formatDuration, calculateSetDuration } from '@/lib/helpers';
 import KeyBadge from '@/components/features/KeyBadge';
 import TagBadge from '@/components/features/TagBadge';
+import type { Gig, Song } from '@/types';
 
 export default function SharedView() {
-  const { gigId } = useParams<{ gigId: string }>();
-  const gig = useGigStore((s) => s.gigs.find((g) => g.id === gigId));
-  const songs = useSongStore((s) => s.songs);
+  const { token } = useParams<{ token: string }>();
+  const [loading, setLoading] = useState(true);
+  const [gig, setGig] = useState<Gig | null>(null);
+  const [songs, setSongs] = useState<Song[]>([]);
+
+  useEffect(() => {
+    if (!token) { setLoading(false); return; }
+    fetchSharedGig(token)
+      .then((result) => {
+        if (result) { setGig(result.gig); setSongs(result.songs); }
+      })
+      .catch((err) => console.error('Failed to load shared gig:', err))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (!gig) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-background gap-4">
         <p className="text-3xl opacity-30">🎵</p>
-        <p className="text-muted-foreground">This gig could not be found.</p>
+        <p className="text-muted-foreground">This setlist could not be found.</p>
         <Link to="/" className="text-primary hover:underline text-sm">Go Home</Link>
       </div>
     );

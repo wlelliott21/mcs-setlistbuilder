@@ -1,9 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { useAuth } from '@/hooks/useAuth';
+import { useSongStore } from '@/stores/songStore';
+import { useGigStore } from '@/stores/gigStore';
+import { fetchSongs, fetchGigs } from '@/lib/db';
 
 export default function AppLayout() {
   const [open, setOpen] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const { user } = useAuth();
+  const setSongs = useSongStore((s) => s.setSongs);
+  const setGigs = useGigStore((s) => s.setGigs);
+
+  useEffect(() => {
+    if (!user) return;
+    let mounted = true;
+
+    async function load() {
+      try {
+        const [songs, gigs] = await Promise.all([
+          fetchSongs(user!.id),
+          fetchGigs(user!.id),
+        ]);
+        if (mounted) {
+          setSongs(songs);
+          setGigs(gigs);
+          setDataLoaded(true);
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+        if (mounted) setDataLoaded(true);
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, [user, setSongs, setGigs]);
+
+  if (!dataLoaded) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center space-y-3">
+          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto" />
+          <p className="text-sm text-muted-foreground">Loading your data…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <aside className="hidden lg:flex w-64 flex-col border-r border-border shrink-0">

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useGigStore } from '@/stores/gigStore';
 import { useSongStore } from '@/stores/songStore';
 import { calculateSetDuration, formatDuration, findDuplicatesAcrossSets } from '@/lib/helpers';
+import { updateSetDb, deleteSetDb, reorderEntriesDb } from '@/lib/db';
+import { showToast } from '@/lib/toast';
 import DurationBar from './DurationBar';
 import SetlistSongItem from './SetlistSongItem';
 import type { GigSet } from '@/types';
@@ -20,7 +22,7 @@ interface Props {
 
 export default function SetPanel({ set, gigId, allSets, bufferTime, canEdit, isActive, onActivate, onAddSong }: Props) {
   const songs = useSongStore((s) => s.songs);
-  const { updateSet, removeSet, reorderSongsInSet } = useGigStore();
+  const { updateSetLocal, removeSetLocal, reorderEntriesLocal } = useGigStore();
   const [collapsed, setCollapsed] = useState(set.collapsed || false);
   const [editingName, setEditingName] = useState(false);
   const [nameVal, setNameVal] = useState(set.name);
@@ -32,30 +34,43 @@ export default function SetPanel({ set, gigId, allSets, bufferTime, canEdit, isA
   const duplicates = findDuplicatesAcrossSets(allSets);
   const otherSets = allSets.filter((s) => s.id !== set.id);
 
-  const handleMoveUp = (index: number) => {
+  const handleMoveUp = async (index: number) => {
     if (index <= 0) return;
     const newEntries = [...set.entries];
     [newEntries[index - 1], newEntries[index]] = [newEntries[index], newEntries[index - 1]];
-    reorderSongsInSet(gigId, set.id, newEntries);
+    reorderEntriesLocal(gigId, set.id, newEntries);
+    try {
+      await reorderEntriesDb(newEntries.map((e, i) => ({ id: e.id, sort_order: i })));
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
-  const handleMoveDown = (index: number) => {
+  const handleMoveDown = async (index: number) => {
     if (index >= set.entries.length - 1) return;
     const newEntries = [...set.entries];
     [newEntries[index], newEntries[index + 1]] = [newEntries[index + 1], newEntries[index]];
-    reorderSongsInSet(gigId, set.id, newEntries);
+    reorderEntriesLocal(gigId, set.id, newEntries);
+    try {
+      await reorderEntriesDb(newEntries.map((e, i) => ({ id: e.id, sort_order: i })));
+    } catch (err: any) { showToast(err.message, 'error'); }
   };
 
-  const saveName = () => {
-    if (nameVal.trim()) updateSet(gigId, set.id, { name: nameVal.trim() });
+  const saveName = async () => {
+    if (nameVal.trim()) {
+      updateSetLocal(gigId, set.id, { name: nameVal.trim() });
+      try { await updateSetDb(set.id, { name: nameVal.trim() }); }
+      catch (err: any) { showToast(err.message, 'error'); }
+    }
     setEditingName(false);
   };
 
+  const handleRemoveSet = async () => {
+    removeSetLocal(gigId, set.id);
+    try { await deleteSetDb(set.id); }
+    catch (err: any) { showToast(err.message, 'error'); }
+  };
+
   return (
-    <div
-      className={cn('border rounded-xl transition-colors', isActive ? 'border-primary/40 bg-primary/[0.02]' : 'border-border bg-card/30')}
-      onClick={onActivate}
-    >
+    <div className={cn('border rounded-xl transition-colors', isActive ? 'border-primary/40 bg-primary/[0.02]' : 'border-border bg-card/30')} onClick={onActivate}>
       <div className="flex items-center gap-2 px-4 py-3">
         <button type="button" onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
           {collapsed ? '▶' : '▼'}
@@ -79,16 +94,13 @@ export default function SetPanel({ set, gigId, allSets, bufferTime, canEdit, isA
             <span className={cn(isOver ? 'text-red-400' : 'text-foreground')}>{formatDuration(dur.total)}</span>
             <span className="text-muted-foreground"> / {set.targetDuration}m</span>
           </span>
-          <span className={cn(
-            'font-mono text-[11px] px-1.5 py-0.5 rounded',
-            isOver ? 'bg-red-500/15 text-red-400' : dur.remaining < 300 ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400'
-          )}>
+          <span className={cn('font-mono text-[11px] px-1.5 py-0.5 rounded', isOver ? 'bg-red-500/15 text-red-400' : dur.remaining < 300 ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400')}>
             {isOver ? '+' : ''}{formatDuration(Math.abs(dur.remaining))} {isOver ? 'over' : 'left'}
           </span>
           <span className="text-muted-foreground">{set.entries.length} songs</span>
           {canEdit && allSets.length > 1 && (
             <button className="w-6 h-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-accent transition-colors text-xs"
-              onClick={(e) => { e.stopPropagation(); removeSet(gigId, set.id); }}>✕</button>
+              onClick={(e) => { e.stopPropagation(); handleRemoveSet(); }}>✕</button>
           )}
         </div>
       </div>
@@ -117,10 +129,8 @@ export default function SetPanel({ set, gigId, allSets, bufferTime, canEdit, isA
             <div className="text-center py-6 text-sm text-muted-foreground border border-dashed border-border rounded-lg">No songs yet — click Add Song to get started</div>
           )}
           {canEdit && (
-            <button
-              className="w-full text-xs h-8 mt-2 rounded-md text-muted-foreground hover:text-primary border border-dashed border-border hover:border-primary/30 transition-colors font-medium"
-              onClick={(e) => { e.stopPropagation(); onAddSong(); }}
-            >+ Add Song</button>
+            <button className="w-full text-xs h-8 mt-2 rounded-md text-muted-foreground hover:text-primary border border-dashed border-border hover:border-primary/30 transition-colors font-medium"
+              onClick={(e) => { e.stopPropagation(); onAddSong(); }}>+ Add Song</button>
           )}
         </div>
       )}
