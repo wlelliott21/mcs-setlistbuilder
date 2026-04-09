@@ -22,7 +22,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     const active = location.pathname === to;
     return (
       <Link to={to} onClick={onNavigate}
-        className={cn('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors', active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-accent')}>
+        className={cn('flex items-center gap-3 px-3 py-3 lg:py-2.5 rounded-lg text-sm font-medium transition-colors min-h-[44px] lg:min-h-0', active ? 'bg-primary/10 text-primary' : 'text-muted-foreground active:text-foreground hover:text-foreground active:bg-accent hover:bg-accent')}>
         <span className="flex-1">{label}</span>
         {badge !== undefined && badge > 0 && (
           <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-mono">{badge}</span>
@@ -40,7 +40,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <span className="font-bold text-base" style={{ fontFamily: 'Syne, sans-serif' }}>Setlist Builder</span>
       </div>
       <div className="h-px bg-border" />
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItem('/', 'Dashboard')}
         {navItem('/library', 'Song Library')}
         <div className="pt-5 pb-2">
@@ -54,7 +54,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             const active = location.pathname === `/gig/${gig.id}`;
             return (
               <Link key={gig.id} to={`/gig/${gig.id}`} onClick={onNavigate}
-                className={cn('flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors', active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-accent')}>
+                className={cn('flex items-center gap-2 px-3 py-3 lg:py-2 rounded-lg text-sm transition-colors min-h-[44px] lg:min-h-0', active ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground active:text-foreground hover:text-foreground active:bg-accent hover:bg-accent')}>
                 <span className="truncate flex-1">{gig.name}</span>
                 {gig.isLocked && <span className="text-amber-400 text-xs">🔒</span>}
               </Link>
@@ -65,7 +65,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="p-3 space-y-2">
         {user && (
           <div className="flex items-center gap-2 px-3 py-2">
-            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary">
+            <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center text-xs font-bold text-primary shrink-0">
               {user.username.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -75,7 +75,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         )}
         <button onClick={handleSignOut}
-          className="w-full text-xs h-8 rounded-md font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          className="w-full text-xs h-10 lg:h-8 rounded-md font-medium text-muted-foreground active:text-foreground hover:text-foreground active:bg-accent hover:bg-accent transition-colors">
           Sign Out
         </button>
       </div>

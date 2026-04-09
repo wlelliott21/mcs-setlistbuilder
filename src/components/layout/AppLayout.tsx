@@ -37,6 +37,16 @@ export default function AppLayout() {
     return () => { mounted = false; };
   }, [user, setSongs, setGigs]);
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   if (!dataLoaded) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -55,7 +65,7 @@ export default function AppLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="lg:hidden flex items-center gap-3 px-4 h-14 border-b border-border shrink-0">
-          <button onClick={() => setOpen(true)} className="p-2 hover:bg-accent rounded-md">
+          <button onClick={() => setOpen(true)} className="p-2.5 -ml-1 active:bg-accent hover:bg-accent rounded-md min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <span className="font-bold text-lg" style={{ fontFamily: 'Syne, sans-serif' }}>Setlist Builder</span>
@@ -64,10 +74,11 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      {/* Mobile sidebar overlay */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="fixed inset-0 bg-black/80" onClick={() => setOpen(false)} />
-          <div className="fixed inset-y-0 left-0 w-72 bg-background border-r border-border shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-y-0 left-0 w-[280px] max-w-[85vw] bg-background border-r border-border shadow-lg" onClick={(e) => e.stopPropagation()}>
             <Sidebar onNavigate={() => setOpen(false)} />
           </div>
         </div>

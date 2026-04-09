@@ -71,13 +71,13 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
 
   return (
     <div className={cn(
-      'rounded-lg transition-colors group relative bg-card/50 hover:bg-card border border-transparent hover:border-border',
+      'rounded-lg transition-colors group relative bg-card/50 active:bg-card hover:bg-card border border-transparent hover:border-border',
       isDuplicate && 'border-amber-500/30 bg-amber-500/5',
       expanded && 'border-border bg-card'
     )}>
-      <div className="flex items-center gap-2 px-2 py-1.5">
+      <div className="flex items-center gap-1.5 sm:gap-2 px-2 py-2 sm:py-1.5">
         <span className="text-[11px] text-muted-foreground font-mono w-5 text-right shrink-0">{index + 1}</span>
-        <button type="button" className="flex-1 min-w-0 text-left cursor-pointer" onClick={() => setExpanded(!expanded)}>
+        <button type="button" className="flex-1 min-w-0 text-left cursor-pointer py-0.5" onClick={() => setExpanded(!expanded)}>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-medium truncate">{song.title}</span>
             {versionName && <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">{versionName}</span>}
@@ -86,20 +86,20 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
           </div>
           <span className="text-[11px] text-muted-foreground truncate block">{song.artist}</span>
         </button>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {canEdit ? (
             <div className="relative">
               <button type="button" onClick={() => setShowKeyPicker(!showKeyPicker)}
-                className="h-6 min-w-[3rem] px-1.5 text-[11px] font-mono font-semibold bg-primary/10 border border-primary/20 text-primary rounded flex items-center justify-center gap-1">
+                className="h-7 sm:h-6 min-w-[3rem] px-1.5 text-[11px] font-mono font-semibold bg-primary/10 border border-primary/20 text-primary rounded flex items-center justify-center gap-1">
                 {effectiveKey} ▾
               </button>
               {showKeyPicker && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowKeyPicker(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-lg p-1 max-h-48 overflow-y-auto w-20">
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg p-1 max-h-60 overflow-y-auto w-24 sm:w-20">
                     {MUSICAL_KEYS.map((k) => (
                       <button key={k} type="button"
-                        className={cn('block w-full text-left px-2 py-1 text-xs font-mono rounded hover:bg-accent', effectiveKey === k && 'bg-accent font-bold')}
+                        className={cn('block w-full text-left px-3 py-2 sm:py-1 text-sm sm:text-xs font-mono rounded-lg active:bg-accent hover:bg-accent', effectiveKey === k && 'bg-accent font-bold')}
                         onClick={() => handleKeyChange(k)}>{k}</button>
                     ))}
                   </div>
@@ -112,18 +112,19 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
           <span className="text-[11px] font-mono text-muted-foreground w-10 text-right">{formatDuration(effectiveDur)}</span>
           {canEdit && (
             <div className="relative">
-              <button className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent text-muted-foreground text-xs" onClick={() => setShowMenu(!showMenu)}>⋮</button>
+              {/* Always visible on mobile */}
+              <button className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded sm:opacity-0 sm:group-hover:opacity-100 transition-opacity active:bg-accent hover:bg-accent text-muted-foreground text-xs" onClick={() => setShowMenu(!showMenu)}>⋮</button>
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-lg p-1 min-w-[10rem]">
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border border-border rounded-xl shadow-lg p-1.5 min-w-[11rem]">
                     {song.versions.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Version</div>
-                        <button type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                        <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase">Version</div>
+                        <button type="button" className="block w-full text-left px-3 py-2.5 text-sm rounded-lg active:bg-accent"
                           onClick={() => handleVersionChange(undefined)}>Default {!entry.versionId && '✓'}</button>
                         {song.versions.map((v) => (
-                          <button key={v.id} type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent"
+                          <button key={v.id} type="button" className="block w-full text-left px-3 py-2.5 text-sm rounded-lg active:bg-accent"
                             onClick={() => handleVersionChange(v.id)}>{v.name} {entry.versionId === v.id && '✓'}</button>
                         ))}
                         <div className="h-px bg-border my-1" />
@@ -131,15 +132,15 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
                     )}
                     {otherSets.length > 0 && (
                       <>
-                        <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase">Move to</div>
+                        <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase">Move to</div>
                         {otherSets.map((st) => (
-                          <button key={st.id} type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent pl-4"
+                          <button key={st.id} type="button" className="block w-full text-left px-3 py-2.5 text-sm rounded-lg active:bg-accent pl-5"
                             onClick={() => handleMoveTo(st.id)}>{st.name}</button>
                         ))}
                         <div className="h-px bg-border my-1" />
                       </>
                     )}
-                    <button type="button" className="block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-accent text-destructive"
+                    <button type="button" className="block w-full text-left px-3 py-2.5 text-sm rounded-lg active:bg-accent text-destructive"
                       onClick={handleRemove}>🗑️ Remove</button>
                   </div>
                 </>
@@ -154,25 +155,25 @@ export default function SetlistSongItem({ entry, index, gigId, setId, otherSets,
             <div className="flex flex-wrap items-center gap-2">
               {song.audioLink && (
                 <a href={song.audioLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
+                  className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:py-1.5 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 active:bg-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
                   🎧 {song.audioLink.includes('spotify') ? 'Spotify' : song.audioLink.includes('youtube') ? 'YouTube' : 'Listen'} ↗
                 </a>
               )}
               {song.chartLink && (
                 <a href={song.chartLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
+                  className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:py-1.5 rounded-md text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20 active:bg-blue-500/20 hover:bg-blue-500/20 transition-colors">
                   📄 {song.chartLink.includes('dropbox') ? 'Dropbox Chart' : 'View Chart'} ↗
                 </a>
               )}
               {song.boardTapeLink && (
                 <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500/20 transition-colors">
+                  className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:py-1.5 rounded-md text-xs font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20 active:bg-orange-500/20 hover:bg-orange-500/20 transition-colors">
                   🎛️ Board Tape ↗
                 </a>
               )}
               {song.choreoVideoLink && (
                 <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-pink-500/10 text-pink-400 border border-pink-500/20 hover:bg-pink-500/20 transition-colors">
+                  className="inline-flex items-center gap-1.5 px-2.5 py-2 sm:py-1.5 rounded-md text-xs font-medium bg-pink-500/10 text-pink-400 border border-pink-500/20 active:bg-pink-500/20 hover:bg-pink-500/20 transition-colors">
                   💃 Choreo Video ↗
                 </a>
               )}

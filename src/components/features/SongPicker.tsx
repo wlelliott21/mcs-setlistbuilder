@@ -61,13 +61,13 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
           Adding to: <span className="text-primary font-semibold">{activeSetName || 'Select a set'}</span>
         </div>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search songs…"
-          className="w-full h-8 text-sm rounded-md border border-input bg-background px-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          className="w-full h-10 sm:h-8 text-sm rounded-md border border-input bg-background px-3 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         <div className="flex flex-wrap gap-1">
           <button type="button" onClick={() => setTagFilter(null)}
-            className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', !tagFilter ? 'bg-primary/15 text-primary border-primary/30' : 'border-border text-muted-foreground hover:text-foreground')}>All</button>
+            className={cn('px-2.5 py-1.5 sm:py-0.5 rounded-full text-[11px] sm:text-[10px] font-medium border transition-colors min-h-[32px] sm:min-h-0', !tagFilter ? 'bg-primary/15 text-primary border-primary/30' : 'border-border text-muted-foreground active:text-foreground')}>All</button>
           {ALL_TAGS.map((tag) => (
             <button key={tag} type="button" onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
-              className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors', tagFilter === tag ? TAG_COLORS[tag] : 'border-border text-muted-foreground hover:text-foreground')}>{tag}</button>
+              className={cn('px-2.5 py-1.5 sm:py-0.5 rounded-full text-[11px] sm:text-[10px] font-medium border transition-colors min-h-[32px] sm:min-h-0', tagFilter === tag ? TAG_COLORS[tag] : 'border-border text-muted-foreground active:text-foreground')}>{tag}</button>
           ))}
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
           {filtered.map((song) => {
             const inGig = usedSongIds.has(song.id);
             return (
-              <div key={song.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent transition-colors group">
+              <div key={song.id} className="flex items-center gap-2 px-2 py-2 sm:py-1.5 rounded-lg active:bg-accent hover:bg-accent transition-colors group">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm font-medium truncate">{song.title}</span>
@@ -89,7 +89,8 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
                     <span className="font-mono">{formatDuration(song.defaultDuration)}</span>
                   </div>
                 </div>
-                <button className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-primary hover:bg-primary/10 text-sm font-bold"
+                {/* Always visible add button on mobile */}
+                <button className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-lg sm:rounded sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-primary bg-primary/10 sm:bg-transparent active:bg-primary/20 hover:bg-primary/10 text-sm font-bold shrink-0"
                   onClick={() => handleAdd(song.id)} disabled={!activeSetId}>+</button>
               </div>
             );
@@ -102,12 +103,12 @@ export default function SongPicker({ gigId, activeSetId, activeSetName, allSets 
             <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-semibold text-amber-400">✨ Smart Suggestions</div>
             <div className="space-y-0.5">
               {suggestions.map((song) => (
-                <div key={song.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent transition-colors group">
+                <div key={song.id} className="flex items-center gap-2 px-2 py-2 sm:py-1.5 rounded-lg active:bg-accent hover:bg-accent transition-colors group">
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium truncate block">{song.title}</span>
                     <span className="text-[11px] text-muted-foreground">{song.artist}</span>
                   </div>
-                  <button className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-primary hover:bg-primary/10 text-sm font-bold"
+                  <button className="w-9 h-9 sm:w-6 sm:h-6 flex items-center justify-center rounded-lg sm:rounded sm:opacity-0 sm:group-hover:opacity-100 text-primary bg-primary/10 sm:bg-transparent active:bg-primary/20 hover:bg-primary/10 text-sm font-bold shrink-0"
                     onClick={() => handleAdd(song.id)} disabled={!activeSetId}>+</button>
                 </div>
               ))}

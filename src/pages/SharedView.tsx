@@ -32,10 +32,10 @@ export default function SharedView() {
 
   if (!gig) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background gap-4">
+      <div className="flex flex-col items-center justify-center h-screen bg-background gap-4 p-6">
         <p className="text-3xl opacity-30">🎵</p>
-        <p className="text-muted-foreground">This setlist could not be found.</p>
-        <Link to="/" className="text-primary hover:underline text-sm">Go Home</Link>
+        <p className="text-muted-foreground text-center">This setlist could not be found.</p>
+        <Link to="/" className="text-primary hover:underline text-sm min-h-[44px] flex items-center">Go Home</Link>
       </div>
     );
   }
@@ -44,27 +44,27 @@ export default function SharedView() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-3 mb-6">
+      <div className="max-w-2xl mx-auto px-4 py-5 sm:py-6">
+        <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
           <div className="flex items-center gap-2">
             <span className="text-lg">♪</span>
             <span className="text-xs text-muted-foreground font-medium">Setlist Builder</span>
           </div>
-          <h1 className="font-extrabold text-2xl" style={{ fontFamily: 'Syne, sans-serif' }}>{gig.name}</h1>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <h1 className="font-extrabold text-xl sm:text-2xl" style={{ fontFamily: 'Syne, sans-serif' }}>{gig.name}</h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
             <span>📅 {dateStr}</span>
             <span>📍 {gig.venue}</span>
             {gig.client && <span>👤 {gig.client}</span>}
           </div>
-          {gig.notes && <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">{gig.notes}</p>}
+          {gig.notes && <p className="text-xs sm:text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">{gig.notes}</p>}
         </div>
         {gig.sets.map((set, si) => {
           const dur = calculateSetDuration(set, songs, gig.bufferTime);
           return (
-            <div key={set.id} className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="font-bold text-base" style={{ fontFamily: 'Syne, sans-serif' }}>{set.name}</h2>
-                <span className="text-xs text-muted-foreground font-mono">⏱ {formatDuration(dur.total)} / {set.targetDuration}m</span>
+            <div key={set.id} className="mb-5 sm:mb-6">
+              <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+                <h2 className="font-bold text-sm sm:text-base" style={{ fontFamily: 'Syne, sans-serif' }}>{set.name}</h2>
+                <span className="text-[11px] sm:text-xs text-muted-foreground font-mono">⏱ {formatDuration(dur.total)} / {set.targetDuration}m</span>
               </div>
               <div className="space-y-2">
                 {set.entries.map((entry, ei) => {
@@ -78,14 +78,14 @@ export default function SharedView() {
                     <div key={entry.id} className="border border-border rounded-lg p-3 bg-card/50 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             <span className="text-xs text-muted-foreground font-mono">{ei + 1}.</span>
                             <span className="font-medium text-sm">{song.title}</span>
                             {version && <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">{version}</span>}
                           </div>
                           <p className="text-xs text-muted-foreground ml-5">{song.artist}</p>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                           <KeyBadge musicKey={key} />
                           <span className="text-xs font-mono text-muted-foreground">{formatDuration(duration)}</span>
                         </div>
@@ -94,10 +94,10 @@ export default function SharedView() {
                       {entryNotes && <div className="flex items-start gap-1.5 ml-5 text-xs text-muted-foreground">📝 {entryNotes}</div>}
                       {(song.audioLink || song.chartLink || song.boardTapeLink || song.choreoVideoLink) && (
                         <div className="flex items-center gap-2 flex-wrap ml-5">
-                          {song.audioLink && <a href={song.audioLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">🎧 Audio ↗</a>}
-                          {song.chartLink && <a href={song.chartLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">📄 Chart ↗</a>}
-                          {song.boardTapeLink && <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">🎛️ Board Tape ↗</a>}
-                          {song.choreoVideoLink && <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">💃 Choreo ↗</a>}
+                          {song.audioLink && <a href={song.audioLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary active:underline hover:underline py-0.5">🎧 Audio ↗</a>}
+                          {song.chartLink && <a href={song.chartLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary active:underline hover:underline py-0.5">📄 Chart ↗</a>}
+                          {song.boardTapeLink && <a href={song.boardTapeLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary active:underline hover:underline py-0.5">🎛️ Board Tape ↗</a>}
+                          {song.choreoVideoLink && <a href={song.choreoVideoLink} target="_blank" rel="noopener noreferrer" className="text-xs text-primary active:underline hover:underline py-0.5">💃 Choreo ↗</a>}
                         </div>
                       )}
                     </div>
@@ -105,11 +105,11 @@ export default function SharedView() {
                 })}
                 {set.entries.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">No songs in this set</p>}
               </div>
-              {si < gig.sets.length - 1 && <div className="h-px bg-border mt-6" />}
+              {si < gig.sets.length - 1 && <div className="h-px bg-border mt-5 sm:mt-6" />}
             </div>
           );
         })}
-        <div className="text-center py-8 text-xs text-muted-foreground">Powered by Setlist Builder</div>
+        <div className="text-center py-6 sm:py-8 text-xs text-muted-foreground">Powered by Setlist Builder</div>
       </div>
     </div>
   );
