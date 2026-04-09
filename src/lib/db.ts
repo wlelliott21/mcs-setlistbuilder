@@ -1,5 +1,13 @@
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import type { Song, SongVersion, Gig, GigSet, SetlistEntry } from '@/types';
+
+// Anonymous client for public shared views — no auth session interference
+const anonClient = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false } }
+);
 
 // ── SONGS ──────────────────────────────────────────────────
 
@@ -375,14 +383,17 @@ export async function moveEntryToSetDb(entryId: string, newSetId: string, sortOr
 // ── SHARED GIG (PUBLIC) ──────────────────────────────────
 
 export async function fetchSharedGig(shareToken: string): Promise<{ gig: Gig; songs: Song[] } | null> {
-  const { data: gigRow, error } = await supabase
+  // Use anonymous client to avoid session/auth interference for public access
+  const client = anonClient;
+
+  const { data: gigRow, error } = await client
     .from('gigs')
     .select('*')
     .eq('share_token', shareToken)
     .single();
   if (error || !gigRow) return null;
 
-  const { data: setRows } = await supabase
+  const { data: setRows } = await client
     .from('gig_sets')
     .select('*')
     .eq('gig_id', gigRow.id)
@@ -391,7 +402,7 @@ export async function fetchSharedGig(shareToken: string): Promise<{ gig: Gig; so
   const setIds = (setRows || []).map((s: any) => s.id);
   let entryRows: any[] = [];
   if (setIds.length > 0) {
-    const { data } = await supabase
+    const { data } = await client
       .from('setlist_entries')
       .select('*')
       .in('set_id', setIds)
@@ -403,11 +414,11 @@ export async function fetchSharedGig(shareToken: string): Promise<{ gig: Gig; so
   let songRows: any[] = [];
   let versionRows: any[] = [];
   if (songIds.length > 0) {
-    const { data: sData } = await supabase.from('songs').select('*').in('id', songIds);
+    const { data: sData } = await client.from('songs').select('*').in('id', songIds);
     songRows = sData || [];
     const versionIds = entryRows.map((e: any) => e.version_id).filter(Boolean);
     if (versionIds.length > 0) {
-      const { data: vData } = await supabase.from('song_versions').select('*').in('id', versionIds);
+      const { data: vData } = await client.from('song_versions').select('*').in('id', versionIds);
       versionRows = vData || [];
     }
   }
