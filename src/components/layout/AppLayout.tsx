@@ -28,8 +28,14 @@ export default function AppLayout() {
           setGigs(gigs);
           setDataLoaded(true);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load data:', err);
+        // If auth token is invalid/expired, sign out so user can re-login
+        if (err?.message?.includes('JWT') || err?.message?.includes('token') || err?.code === 'PGRST301' || err?.status === 401) {
+          const { signOut } = await import('@/hooks/useAuth');
+          await signOut();
+          return;
+        }
         if (mounted) setDataLoaded(true);
       }
     }

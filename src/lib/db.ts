@@ -11,6 +11,15 @@ const anonClient = createClient(
 
 // ── SONGS ──────────────────────────────────────────────────
 
+// Batch helper: splits an array into chunks to avoid URL length limits on .in() queries
+function chunk<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export async function fetchSongs(userId: string): Promise<Song[]> {
   const { data: songRows, error } = await supabase
     .from('songs')
@@ -22,12 +31,19 @@ export async function fetchSongs(userId: string): Promise<Song[]> {
   const songIds = (songRows || []).map((s: any) => s.id);
   let versionRows: any[] = [];
   if (songIds.length > 0) {
-    const { data, error: vErr } = await supabase
-      .from('song_versions')
-      .select('*')
-      .in('song_id', songIds);
-    if (vErr) throw vErr;
-    versionRows = data || [];
+    // Batch into chunks of 20 to avoid exceeding URL length limits
+    const batches = chunk(songIds, 20);
+    const results = await Promise.all(
+      batches.map(async (batch) => {
+        const { data, error: vErr } = await supabase
+          .from('song_versions')
+          .select('*')
+          .in('song_id', batch);
+        if (vErr) throw vErr;
+        return data || [];
+      })
+    );
+    versionRows = results.flat();
   }
 
   return (songRows || []).map((row: any) => ({
@@ -414,12 +430,25 @@ export async function fetchSharedGig(shareToken: string): Promise<{ gig: Gig; so
   let songRows: any[] = [];
   let versionRows: any[] = [];
   if (songIds.length > 0) {
-    const { data: sData } = await client.from('songs').select('*').in('id', songIds);
-    songRows = sData || [];
+    // Batch song fetches to avoid URL length limits
+    const songBatches = chunk(songIds, 20);
+    const songResults = await Promise.all(
+      songBatches.map(async (batch) => {
+        const { data: sData } = await client.from('songs').select('*').in('id', batch);
+        return sData || [];
+      })
+    );
+    songRows = songResults.flat();
     const versionIds = entryRows.map((e: any) => e.version_id).filter(Boolean);
     if (versionIds.length > 0) {
-      const { data: vData } = await client.from('song_versions').select('*').in('id', versionIds);
-      versionRows = vData || [];
+      const versionBatches = chunk(versionIds, 20);
+      const versionResults = await Promise.all(
+        versionBatches.map(async (batch) => {
+          const { data: vData } = await client.from('song_versions').select('*').in('id', batch);
+          return vData || [];
+        })
+      );
+      versionRows = versionResults.flat();
     }
   }
 
