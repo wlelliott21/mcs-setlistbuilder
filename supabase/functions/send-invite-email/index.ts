@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Setlist Builder <onboarding@resend.dev>',
+        from: 'Setlist Builder <noreply@setlist.themusiccitysound.com>',
         to: [inviteeEmail],
         subject: `${ownerName} invited you to collaborate on Setlist Builder`,
         html: emailHtml,
