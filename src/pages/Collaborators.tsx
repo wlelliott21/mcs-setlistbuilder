@@ -68,7 +68,7 @@ export default function Collaborators() {
     }
     setSending(true);
     try {
-      const collab = await inviteCollaborator(user.id, trimmed);
+      const collab = await inviteCollaborator(user.id, trimmed, user.username, user.email);
       setMyCollaborators((prev) => [collab, ...prev]);
       setEmail('');
       showToast(`Invitation sent to ${trimmed}`);

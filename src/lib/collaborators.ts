@@ -45,8 +45,21 @@ export async function fetchInvitationsForMe(userEmail: string): Promise<Collabor
   }));
 }
 
+/** Send invitation email via Edge Function (fire-and-forget) */
+async function sendInviteEmail(inviteeEmail: string, ownerName: string, ownerEmail: string) {
+  try {
+    const { error } = await supabase.functions.invoke('send-invite-email', {
+      body: { inviteeEmail, ownerName, ownerEmail },
+    });
+    if (error) console.error('Failed to send invite email:', error);
+    else console.log('Invite email sent to', inviteeEmail);
+  } catch (err) {
+    console.error('Email notification error:', err);
+  }
+}
+
 /** Invite a collaborator by email */
-export async function inviteCollaborator(ownerId: string, email: string): Promise<Collaborator> {
+export async function inviteCollaborator(ownerId: string, email: string, ownerName?: string, ownerEmail?: string): Promise<Collaborator> {
   // First check if the user exists in user_profiles
   const { data: existingUser } = await supabase
     .from('user_profiles')
@@ -74,7 +87,7 @@ export async function inviteCollaborator(ownerId: string, email: string): Promis
     throw error;
   }
 
-  return {
+  const result: Collaborator = {
     id: data.id,
     ownerId: data.owner_id,
     ownerEmail: data.owner?.email || '',
@@ -85,6 +98,13 @@ export async function inviteCollaborator(ownerId: string, email: string): Promis
     status: data.status,
     createdAt: data.created_at,
   };
+
+  // Fire-and-forget email notification
+  if (ownerName && ownerEmail) {
+    sendInviteEmail(email, ownerName, ownerEmail);
+  }
+
+  return result;
 }
 
 /** Accept an invitation */
