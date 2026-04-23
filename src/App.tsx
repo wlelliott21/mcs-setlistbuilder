@@ -10,6 +10,7 @@ const LiveMode = lazy(() => import('@/pages/LiveMode'));
 const SharedView = lazy(() => import('@/pages/SharedView'));
 const PrintView = lazy(() => import('@/pages/PrintView'));
 const Login = lazy(() => import('@/pages/Login'));
+const Collaborators = lazy(() => import('@/pages/Collaborators'));
 
 function LoadingSpinner() {
   return (
@@ -79,6 +80,7 @@ export default function App() {
             <Route element={<AuthGate><AppLayout /></AuthGate>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/library" element={<SongLibrary />} />
+              <Route path="/collaborators" element={<Collaborators />} />
               <Route path="/gig/:gigId" element={<GigBuilder />} />
             </Route>
             <Route path="/gig/:gigId/live" element={<AuthGate><LiveMode /></AuthGate>} />

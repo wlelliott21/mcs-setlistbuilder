@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useGigStore } from '@/stores/gigStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { createGig, updateGigDb, deleteGigDb } from '@/lib/db';
 import { GIG_TEMPLATES, DEFAULT_BUFFER_TIME } from '@/constants/config';
 import { showToast } from '@/lib/toast';
@@ -19,6 +20,7 @@ export default function GigFormDialog({ open, onOpenChange, gig }: Props) {
   const navigate = useNavigate();
   const { addGig, updateGig, deleteGig } = useGigStore();
   const { user } = useAuth();
+  const { activeOwnerId } = useWorkspaceStore();
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
   const [venue, setVenue] = useState('');
@@ -53,6 +55,7 @@ export default function GigFormDialog({ open, onOpenChange, gig }: Props) {
     if (!name.trim() || !venue.trim() || !date) { showToast('Name, date, and venue are required', 'error'); return; }
     if (!user) return;
     setSaving(true);
+    const effectiveUserId = activeOwnerId || user.id;
 
     try {
       if (gig) {
@@ -60,7 +63,7 @@ export default function GigFormDialog({ open, onOpenChange, gig }: Props) {
         updateGig(gig.id, { name: name.trim(), date, venue: venue.trim(), client: client.trim() || undefined, notes: notes.trim() || undefined });
         showToast('Gig updated');
       } else {
-        const newGig = await createGig(user.id, {
+        const newGig = await createGig(effectiveUserId, {
           name: name.trim(), date, venue: venue.trim(), client: client.trim() || undefined,
           notes: notes.trim() || undefined, bufferTime: DEFAULT_BUFFER_TIME,
           sets: sets.map((s) => ({ name: s.name, targetDuration: s.targetDuration })),

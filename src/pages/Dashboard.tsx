@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useSongStore } from '@/stores/songStore';
 import { useGigStore } from '@/stores/gigStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import GigCard from '@/components/features/GigCard';
 import GigFormDialog from '@/components/features/GigFormDialog';
 
 export default function Dashboard() {
   const songs = useSongStore((s) => s.songs);
   const gigs = useGigStore((s) => s.gigs);
+  const { isOwnWorkspace, activeOwnerName } = useWorkspaceStore();
   const [gigDialogOpen, setGigDialogOpen] = useState(false);
 
   const totalDurHours = Math.round((songs.reduce((a, s) => a + s.defaultDuration, 0) / 3600) * 10) / 10;
@@ -26,8 +28,12 @@ export default function Dashboard() {
       {/* Hero */}
       <div className="relative rounded-2xl overflow-hidden h-36 sm:h-48 md:h-56 bg-gradient-to-r from-background via-card to-primary/10">
         <div className="relative flex flex-col justify-center h-full px-5 sm:px-6 md:px-10 max-w-xl">
-          <h1 className="font-extrabold text-xl sm:text-2xl md:text-3xl tracking-tight" style={{ fontFamily: 'Syne, sans-serif' }}>Your Setlists, Ready to Perform</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2">Build, manage, and perform setlists with confidence.</p>
+          <h1 className="font-extrabold text-xl sm:text-2xl md:text-3xl tracking-tight" style={{ fontFamily: 'Syne, sans-serif' }}>
+            {isOwnWorkspace ? 'Your Setlists, Ready to Perform' : `${activeOwnerName}'s Library`}
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 sm:mt-2">
+            {isOwnWorkspace ? 'Build, manage, and perform setlists with confidence.' : `You are collaborating on ${activeOwnerName}'s songs and gigs.`}
+          </p>
           <div className="flex gap-2 mt-3 sm:mt-4">
             <Button onClick={() => setGigDialogOpen(true)} size="sm" className="h-9 min-w-[44px]">+ New Gig</Button>
           </div>

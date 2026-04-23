@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSongStore } from '@/stores/songStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { createSong, updateSongDb, fetchSongs } from '@/lib/db';
 import { formatDuration, parseDuration } from '@/lib/helpers';
 import { MUSICAL_KEYS, ALL_TAGS, TAG_COLORS } from '@/types';
@@ -21,6 +22,7 @@ const emptyForm = { title: '', artist: '', defaultKey: 'C', defaultDuration: '3:
 export default function SongFormDialog({ open, onOpenChange, song }: Props) {
   const { updateSong, setSongs } = useSongStore();
   const { user } = useAuth();
+  const { activeOwnerId } = useWorkspaceStore();
   const [form, setForm] = useState(emptyForm);
   const [versions, setVersions] = useState<VersionForm[]>([]);
   const [showKeyPicker, setShowKeyPicker] = useState(false);
@@ -48,6 +50,9 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
       notes: v.notes || undefined,
     }));
 
+    // Use the active workspace owner ID for data operations
+    const effectiveUserId = activeOwnerId || user.id;
+
     try {
       if (song) {
         const updates: Partial<Song> = {
@@ -59,18 +64,18 @@ export default function SongFormDialog({ open, onOpenChange, song }: Props) {
         };
         await updateSongDb(song.id, updates);
         // Refetch to get correct version IDs from DB
-        const freshSongs = await fetchSongs(user.id);
+        const freshSongs = await fetchSongs(effectiveUserId);
         setSongs(freshSongs);
         showToast('Song updated');
       } else {
-        await createSong(user.id, {
+        await createSong(effectiveUserId, {
           title: form.title.trim(), artist: form.artist.trim(), defaultKey: form.defaultKey,
           defaultDuration: parseDuration(form.defaultDuration),
           audioLink: form.audioLink || undefined, chartLink: form.chartLink || undefined,
           boardTapeLink: form.boardTapeLink || undefined, choreoVideoLink: form.choreoVideoLink || undefined,
           notes: form.notes || undefined, tags: form.tags, versions: versionData,
         });
-        const freshSongs = await fetchSongs(user.id);
+        const freshSongs = await fetchSongs(effectiveUserId);
         setSongs(freshSongs);
         showToast('Song added to library');
       }

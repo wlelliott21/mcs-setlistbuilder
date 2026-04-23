@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import { useAuth } from '@/hooks/useAuth';
 import { useSongStore } from '@/stores/songStore';
 import { useGigStore } from '@/stores/gigStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { fetchSongs, fetchGigs } from '@/lib/db';
 
 export default function AppLayout() {
@@ -12,16 +13,21 @@ export default function AppLayout() {
   const { user } = useAuth();
   const setSongs = useSongStore((s) => s.setSongs);
   const setGigs = useGigStore((s) => s.setGigs);
+  const { activeOwnerId } = useWorkspaceStore();
 
+  // Re-fetch data whenever the active workspace changes
   useEffect(() => {
-    if (!user) return;
+    const loadId = activeOwnerId || user?.id;
+    if (!loadId || !user) return;
     let mounted = true;
+
+    setDataLoaded(false);
 
     async function load() {
       try {
         const [songs, gigs] = await Promise.all([
-          fetchSongs(user!.id),
-          fetchGigs(user!.id),
+          fetchSongs(loadId!),
+          fetchGigs(loadId!),
         ]);
         if (mounted) {
           setSongs(songs);
@@ -30,7 +36,6 @@ export default function AppLayout() {
         }
       } catch (err: any) {
         console.error('Failed to load data:', err);
-        // If auth token is invalid/expired, sign out so user can re-login
         if (err?.message?.includes('JWT') || err?.message?.includes('token') || err?.code === 'PGRST301' || err?.status === 401) {
           const { signOut } = await import('@/hooks/useAuth');
           await signOut();
@@ -41,7 +46,7 @@ export default function AppLayout() {
     }
     load();
     return () => { mounted = false; };
-  }, [user, setSongs, setGigs]);
+  }, [user, activeOwnerId, setSongs, setGigs]);
 
   // Lock body scroll when mobile sidebar is open
   useEffect(() => {

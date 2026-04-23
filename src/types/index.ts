@@ -103,3 +103,21 @@ export interface GigTemplate {
   description: string;
   sets: { name: string; targetDuration: number }[];
 }
+
+export interface Collaborator {
+  id: string;
+  ownerId: string;
+  ownerEmail: string;
+  ownerName: string;
+  collaboratorId: string | null;
+  collaboratorEmail: string;
+  collaboratorName: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+}
+
+export interface Workspace {
+  ownerId: string;
+  ownerName: string;
+  isOwn: boolean;
+}

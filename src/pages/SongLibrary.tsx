@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSongStore } from '@/stores/songStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import SongCard from '@/components/features/SongCard';
 import SongFormDialog from '@/components/features/SongFormDialog';
 import { ALL_TAGS, TAG_COLORS } from '@/types';
@@ -13,6 +14,7 @@ import { showToast } from '@/lib/toast';
 export default function SongLibrary() {
   const songs = useSongStore((s) => s.songs);
   const deleteSong = useSongStore((s) => s.deleteSong);
+  const { isOwnWorkspace, activeOwnerName } = useWorkspaceStore();
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<Tag | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,7 +43,9 @@ export default function SongLibrary() {
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 pb-24 sm:pb-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-bold text-lg sm:text-xl" style={{ fontFamily: 'Syne, sans-serif' }}>Song Library</h1>
+          <h1 className="font-bold text-lg sm:text-xl" style={{ fontFamily: 'Syne, sans-serif' }}>
+            {isOwnWorkspace ? 'Song Library' : `${activeOwnerName}'s Songs`}
+          </h1>
           <p className="text-xs text-muted-foreground mt-0.5">{songs.length} songs</p>
         </div>
         <Button onClick={handleNew} size="sm" className="h-9 min-w-[44px]">+ Add Song</Button>
